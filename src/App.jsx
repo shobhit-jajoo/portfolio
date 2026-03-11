@@ -71,6 +71,16 @@ function useInView(ref, threshold = 0.15) {
   return inView;
 }
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return isMobile;
+}
+
 function AnimatedSection({ children, style, delay = 0 }) {
   const ref = useRef(null);
   const inView = useInView(ref);
@@ -217,7 +227,8 @@ export default function Portfolio() {
   const [activeSection, setActiveSection] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollY = useScrollY();
-  const particles = useParticles(50);
+  const isMobile = useIsMobile();
+  const particles = useParticles(isMobile ? 20 : 50);
   const sectionRefs = useRef([]);
   const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
   const [cursorActive, setCursorActive] = useState(false);
@@ -255,7 +266,7 @@ export default function Portfolio() {
 
   const sectionStyle = {
     minHeight: "100vh",
-    padding: "80px 24px",
+    padding: isMobile ? "72px 16px 48px" : "80px 24px",
     maxWidth: 1100,
     margin: "0 auto",
   };
@@ -360,10 +371,74 @@ export default function Portfolio() {
           transform: translateX(4px);
           background: ${COLORS.accentSoft};
         }
+
+        /* ── MOBILE RESPONSIVE ── */
+        @media (max-width: 767px) {
+          .desktop-nav-links { display: none !important; }
+          .side-dots { display: none !important; }
+          .custom-cursor { display: none !important; }
+
+          .hero-grid {
+            grid-template-columns: 1fr !important;
+            text-align: center;
+          }
+          .hero-orb-wrap { justify-content: center; margin-top: 40px; }
+          .hero-orb { width: 160px !important; height: 160px !important; }
+          .hero-orb-sj { font-size: 34px !important; }
+          .hero-orb-ring-280 { width: 210px !important; height: 210px !important; margin-left: -105px !important; margin-top: -105px !important; }
+          .hero-orb-ring-340 { width: 260px !important; height: 260px !important; margin-left: -130px !important; margin-top: -130px !important; }
+          .hero-btns { justify-content: center; }
+
+          .two-col { grid-template-columns: 1fr !important; }
+          .four-col { grid-template-columns: 1fr 1fr !important; }
+          .project-points { grid-template-columns: 1fr !important; }
+
+          .section-pad {
+            padding: 72px 16px 48px !important;
+            min-height: unset !important;
+          }
+          .section-title { font-size: 24px !important; }
+
+          .mobile-menu-btn { display: flex !important; }
+          .mobile-nav-drawer {
+            position: fixed; top: 64px; left: 0; right: 0;
+            background: ${COLORS.surface}f5;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid ${COLORS.border};
+            padding: 20px 24px;
+            display: flex; flex-direction: column; gap: 4px;
+            z-index: 99;
+          }
+          .mobile-nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: ${COLORS.muted};
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            background: none; border: none;
+            text-align: left;
+            font-family: 'Space Mono', monospace;
+            transition: all 0.2s;
+          }
+          .mobile-nav-item:hover, .mobile-nav-item.active {
+            color: ${COLORS.accent};
+            background: ${COLORS.accentSoft};
+          }
+
+          .btn-primary { padding: 12px 20px !important; font-size: 11px !important; letter-spacing: 1px !important; }
+        }
+
+        @media (max-width: 400px) {
+          .four-col { grid-template-columns: 1fr 1fr !important; }
+        }
+        .mobile-menu-btn { display: none; }
       `}</style>
 
       {/* Custom cursor */}
-      <div style={{
+      <div className="custom-cursor" style={{
         position: "fixed",
         left: cursorPos.x - 12,
         top: cursorPos.y - 12,
@@ -414,7 +489,7 @@ export default function Portfolio() {
         left: 0,
         right: 0,
         zIndex: 100,
-        padding: "0 40px",
+        padding: "0 24px",
         height: 64,
         display: "flex",
         alignItems: "center",
@@ -427,43 +502,74 @@ export default function Portfolio() {
         <div style={{ fontFamily: "'Orbitron', monospace", fontSize: 18, fontWeight: 900, color: COLORS.accent, letterSpacing: 3 }}>
           SJ<span style={{ color: COLORS.text }}>.</span>
         </div>
-        <div style={{ display: "flex", gap: 32 }}>
+        {/* Desktop nav */}
+        <div className="desktop-nav-links" style={{ display: "flex", gap: 32 }}>
           {navItems.map((item, i) => (
             <button key={item} className={`nav-link${activeSection === i ? " active" : ""}`} onClick={() => scrollTo(i)}>
               {item}
             </button>
           ))}
         </div>
+        {/* Hamburger */}
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setMenuOpen(o => !o)}
+          style={{
+            background: "none", border: `1px solid ${COLORS.border}`, borderRadius: 8,
+            width: 40, height: 40, cursor: "pointer",
+            flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5,
+            padding: 0,
+          }}
+        >
+          {[0,1,2].map(i => (
+            <span key={i} style={{
+              display: "block", width: menuOpen ? (i === 1 ? 0 : 20) : 20, height: 2,
+              background: COLORS.accent, borderRadius: 2,
+              transition: "all 0.3s",
+              transform: menuOpen ? (i === 0 ? "rotate(45deg) translate(5px,5px)" : i === 2 ? "rotate(-45deg) translate(5px,-5px)" : "") : "none",
+            }} />
+          ))}
+        </button>
       </nav>
+      {/* Mobile nav drawer */}
+      {menuOpen && (
+        <div className="mobile-nav-drawer">
+          {navItems.map((item, i) => (
+            <button key={item} className={`mobile-nav-item${activeSection === i ? " active" : ""}`} onClick={() => scrollTo(i)}>
+              <span style={{ color: COLORS.accent, marginRight: 10 }}>0{i + 1}.</span>{item}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Side nav dots */}
-      <div style={{ position: "fixed", right: 28, top: "50%", transform: "translateY(-50%)", zIndex: 100, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="side-dots" style={{ position: "fixed", right: 28, top: "50%", transform: "translateY(-50%)", zIndex: 100, display: "flex", flexDirection: "column", gap: 10 }}>
         {navItems.map((item, i) => (
           <NavDot key={item} label={item} active={activeSection === i} onClick={() => scrollTo(i)} />
         ))}
       </div>
 
       {/* HERO */}
-      <section ref={el => sectionRefs.current[0] = el} style={{ minHeight: "100vh", display: "flex", alignItems: "center", padding: "0 24px", position: "relative", zIndex: 1 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 60 }}>
+      <section ref={el => sectionRefs.current[0] = el} style={{ minHeight: "100vh", display: "flex", alignItems: "center", padding: isMobile ? "80px 16px 40px" : "0 24px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", alignItems: "center", gap: isMobile ? 40 : 60, textAlign: isMobile ? "center" : "left" }}>
           <div>
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 16, display: "flex", justifyContent: isMobile ? "center" : "flex-start" }}>
               <span className="tag" style={{ background: COLORS.accentSoft, color: COLORS.accent, border: `1px solid ${COLORS.border}` }}>
                 ◉ Available for Opportunities
               </span>
             </div>
-            <h1 style={{ fontFamily: "'Orbitron', monospace", fontSize: "clamp(42px, 6vw, 80px)", fontWeight: 900, lineHeight: 1.05, marginBottom: 16 }}>
+            <h1 style={{ fontFamily: "'Orbitron', monospace", fontSize: "clamp(38px, 6vw, 80px)", fontWeight: 900, lineHeight: 1.05, marginBottom: 16 }}>
               <span style={{ display: "block", color: COLORS.text }}>SHOBHIT</span>
               <span style={{ display: "block", color: COLORS.accent, textShadow: `0 0 40px ${COLORS.accent}66` }}>JAJOO</span>
             </h1>
-            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "clamp(14px, 2vw, 20px)", color: COLORS.muted, marginBottom: 32, minHeight: 28 }}>
+            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "clamp(13px, 2vw, 20px)", color: COLORS.muted, marginBottom: 32, minHeight: 28 }}>
               <span style={{ color: COLORS.accent }}>&gt; </span>
               <TypewriterText texts={["Software Engineer", "React Developer", "Problem Solver", "DSA Enthusiast", "Full Stack Builder"]} />
             </div>
-            <p style={{ fontSize: 15, lineHeight: 1.8, color: COLORS.muted, maxWidth: 520, marginBottom: 40 }}>
+            <p style={{ fontSize: 15, lineHeight: 1.8, color: COLORS.muted, maxWidth: 520, marginBottom: 40, margin: isMobile ? "0 auto 40px" : "0 0 40px" }}>
               Computer Science student at <span style={{ color: COLORS.text }}>VIT Chennai</span> with a 9.14 CGPA. I build efficient software systems and solve complex algorithmic challenges — 100+ LeetCode problems and counting.
             </p>
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: isMobile ? "center" : "flex-start" }}>
               <button className="btn-primary" onClick={() => scrollTo(5)}>Get in Touch ↗</button>
               <button className="btn-primary" style={{ borderColor: COLORS.muted + "55", color: COLORS.muted }} onClick={() => scrollTo(3)}>View Projects</button>
             </div>
@@ -472,8 +578,8 @@ export default function Portfolio() {
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div style={{ position: "relative", animation: "float 6s ease-in-out infinite" }}>
               <div style={{
-                width: 220,
-                height: 220,
+                width: isMobile ? 160 : 220,
+                height: isMobile ? 160 : 220,
                 borderRadius: "50%",
                 background: `conic-gradient(from 0deg, ${COLORS.accent}, #a78bfa, ${COLORS.accent})`,
                 padding: 3,
@@ -490,13 +596,13 @@ export default function Portfolio() {
                   flexDirection: "column",
                 }}>
                   <div style={{ animation: "rotate 8s linear infinite reverse", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <div style={{ fontFamily: "'Orbitron', monospace", fontSize: 48, fontWeight: 900, color: COLORS.accent }}>SJ</div>
+                    <div style={{ fontFamily: "'Orbitron', monospace", fontSize: isMobile ? 34 : 48, fontWeight: 900, color: COLORS.accent }}>SJ</div>
                     <div style={{ fontSize: 11, color: COLORS.muted, letterSpacing: 3, textTransform: "uppercase", fontFamily: "'Space Mono', monospace" }}>Dev</div>
                   </div>
                 </div>
               </div>
               {/* Orbit rings */}
-              {[280, 340].map((s, i) => (
+              {(isMobile ? [210, 260] : [280, 340]).map((s, i) => (
                 <div key={s} style={{
                   position: "absolute",
                   top: "50%",
@@ -541,7 +647,7 @@ export default function Portfolio() {
             <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${COLORS.border}, transparent)` }} />
           </div>
         </AnimatedSection>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 40 }}>
           <AnimatedSection delay={100}>
             <GlowCard>
               <h3 style={{ fontFamily: "'Orbitron', monospace", fontSize: 16, color: COLORS.accent, marginBottom: 20, letterSpacing: 2 }}>Profile</h3>
@@ -573,8 +679,8 @@ export default function Portfolio() {
               </div>
             </GlowCard>
           </AnimatedSection>
-          <AnimatedSection delay={300} style={{ gridColumn: "1 / -1" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+          <AnimatedSection delay={300} style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 16 }}>
               {[
                 { val: "9.14", label: "CGPA", icon: "🎓", color: COLORS.gold },
                 { val: "100+", label: "LeetCode Problems", icon: "⚡", color: COLORS.accent },
@@ -601,7 +707,7 @@ export default function Portfolio() {
             <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${COLORS.border}, transparent)` }} />
           </div>
         </AnimatedSection>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 40 }}>
           <AnimatedSection delay={100}>
             <GlowCard style={{ height: "100%" }}>
               <h3 style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: COLORS.accent, marginBottom: 24, letterSpacing: 2, textTransform: "uppercase" }}>Proficiency</h3>
@@ -678,7 +784,7 @@ export default function Portfolio() {
                 fontSize: 28,
               }}>🎬</div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 24 }}>
               {[
                 "Developed a mobile app displaying currently running movies and their complete details",
                 "Implemented browsing features for movie listings with title, description, and show timings",
@@ -716,7 +822,7 @@ export default function Portfolio() {
             <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${COLORS.border}, transparent)` }} />
           </div>
         </AnimatedSection>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 32 }}>
           <AnimatedSection delay={100}>
             <GlowCard glowColor={COLORS.gold} style={{ height: "100%" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
@@ -780,7 +886,7 @@ export default function Portfolio() {
             <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${COLORS.border}, transparent)` }} />
           </div>
         </AnimatedSection>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 40 }}>
           <AnimatedSection delay={100}>
             <div>
               <h3 style={{ fontFamily: "'Orbitron', monospace", fontSize: 24, fontWeight: 900, color: COLORS.text, marginBottom: 16 }}>
