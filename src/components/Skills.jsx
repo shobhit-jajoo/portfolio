@@ -29,7 +29,7 @@ export default function Skills() {
       </section>
 
       <section className="section container highlights" aria-label="Highlights">
-        <div className="highlight reveal"><strong>100+</strong><span>LeetCode problems</span></div>
+        <div className="highlight reveal"><strong>150+</strong><span>LeetCode problems</span></div>
         <div className="highlight reveal"><strong>9.1</strong><span>CGPA</span></div>
         <div className="highlight reveal"><strong>10+</strong><span>Projects</span></div>
         <div className="highlight reveal"><strong>2028</strong><span>Expected graduation</span></div>
